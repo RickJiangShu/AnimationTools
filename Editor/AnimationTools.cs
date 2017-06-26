@@ -20,7 +20,7 @@ public class AnimationTools : Editor
     /// <summary>
     /// 动画事件粘贴板（以名字为索引）
     /// </summary>
-    private static Dictionary<string, AnimationEvent[]> EventsClipboard = new Dictionary<string, AnimationEvent[]>();
+    private static Dictionary<string, UnityEngine.AnimationEvent[]> EventsClipboard = new Dictionary<string, UnityEngine.AnimationEvent[]>();
 
     /// <summary>
     /// 将选中的fbx文件的动画格式改成Legacy
@@ -79,7 +79,7 @@ public class AnimationTools : Editor
             if (clip == null)
                 continue;
 
-            AnimationEvent[] events = AnimationUtility.GetAnimationEvents(clip);
+            UnityEngine.AnimationEvent[] events = AnimationUtility.GetAnimationEvents(clip);
             EventsClipboard.Add(clip.name, events);
         }
     }
@@ -97,7 +97,7 @@ public class AnimationTools : Editor
             if (clip == null)
                 continue;
 
-            AnimationEvent[] events;
+            UnityEngine.AnimationEvent[] events;
             EventsClipboard.TryGetValue(clip.name, out events);
             if (events == null)
                 continue;
