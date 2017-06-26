@@ -18,9 +18,9 @@ using System.IO;
 public class AnimationTools : Editor
 {
     /// <summary>
-    /// 动画事件粘贴板（以名字为索引）
+    /// 动画数据粘贴板（以名字为索引）
     /// </summary>
-    private static Dictionary<string, UnityEngine.AnimationEvent[]> EventsClipboard = new Dictionary<string, UnityEngine.AnimationEvent[]>();
+    private static Dictionary<string, AnimationClipboardData> Clipboard = new Dictionary<string, AnimationClipboardData>();
 
     /// <summary>
     /// 将选中的fbx文件的动画格式改成Legacy
@@ -60,7 +60,7 @@ public class AnimationTools : Editor
                 AnimationClip clip = obj as AnimationClip;
                 if (clip != null && clip.name.IndexOf("__preview__") == -1)
                 {
-                    AnimationClip newClip = DuplicateAnimationClip(clip);
+                    DuplicateAnimationClip(clip);
                 }
             }
         }
@@ -69,18 +69,22 @@ public class AnimationTools : Editor
     /// <summary>
     /// 复制选中的动画的事件
     /// </summary>
-    [MenuItem("Assets/Animation Tools/Copy Events")]
+    [MenuItem("Assets/Animation Tools/Copy Clips Data")]
     static void CopyAnimationEvents()
     {
-        EventsClipboard.Clear();
+        Clipboard.Clear();
         foreach (Object selectedObj in Selection.objects)
         {
             AnimationClip clip = selectedObj as AnimationClip;
             if (clip == null)
                 continue;
 
-            UnityEngine.AnimationEvent[] events = AnimationUtility.GetAnimationEvents(clip);
-            EventsClipboard.Add(clip.name, events);
+            AnimationClipboardData data = new AnimationClipboardData();
+            data.events = AnimationUtility.GetAnimationEvents(clip);
+            data.wropMode = clip.wrapMode;
+            data.length = clip.length;
+
+            Clipboard.Add(clip.name, data);
         }
     }
 
@@ -88,7 +92,7 @@ public class AnimationTools : Editor
     /// <summary>
     /// 粘贴剪切板中的事件到动画上
     /// </summary>
-    [MenuItem("Assets/Animation Tools/Past Events")]
+    [MenuItem("Assets/Animation Tools/Past Clips Data")]
     static void PastAnimationEvents()
     {
         foreach (Object selectedObj in Selection.objects)
@@ -97,14 +101,19 @@ public class AnimationTools : Editor
             if (clip == null)
                 continue;
 
-            UnityEngine.AnimationEvent[] events;
-            EventsClipboard.TryGetValue(clip.name, out events);
-            if (events == null)
+            AnimationClipboardData data;
+            if (!Clipboard.TryGetValue(clip.name, out data))
                 continue;
 
-            AnimationUtility.SetAnimationEvents(clip, events);
+            if (clip.length != data.length)
+            {
+                UnityEngine.Debug.LogWarning(clip.name + "动画长度与旧的长度不符！");
+            }
+
+            AnimationUtility.SetAnimationEvents(clip, data.events);
+            clip.wrapMode = data.wropMode;
         }
-        EventsClipboard.Clear();
+        Clipboard.Clear();
     }
 
 
@@ -114,7 +123,10 @@ public class AnimationTools : Editor
         if (sourceClip != null)
         {
             string path = AssetDatabase.GetAssetPath(sourceClip);
-            path = Path.Combine(Path.GetDirectoryName(path), sourceClip.name) + ".anim";
+            string directoryPath = Path.GetDirectoryName(path) + "/Animtions/";
+            if(!Directory.Exists(directoryPath))
+                Directory.CreateDirectory(directoryPath);
+            path = Path.Combine(directoryPath, sourceClip.name) + ".anim";
             string newPath = AssetDatabase.GenerateUniqueAssetPath (path);
             AnimationClip newClip = new AnimationClip();
             EditorUtility.CopySerialized(sourceClip, newClip);
@@ -123,6 +135,13 @@ public class AnimationTools : Editor
         }
         return null;
     }
+}
+
+public struct AnimationClipboardData
+{
+    public UnityEngine.AnimationEvent[] events;
+    public WrapMode wropMode;
+    public float length;
 }
 
 /**
