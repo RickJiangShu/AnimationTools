@@ -84,14 +84,15 @@ public class AnimationTools : Editor
         if (sourceClip != null)
         {
             string path = AssetDatabase.GetAssetPath(sourceClip);
-            string directoryPath = Path.GetDirectoryName(path) + "/Animtions/";
+            string directoryPath = Path.GetDirectoryName(path) + "/Animations/";
             if (!Directory.Exists(directoryPath))
                 Directory.CreateDirectory(directoryPath);
             path = Path.Combine(directoryPath, sourceClip.name) + ".anim";
-            string newPath = AssetDatabase.GenerateUniqueAssetPath(path);
+            
+           // string newPath = AssetDatabase.GenerateUniqueAssetPath(path);
             AnimationClip newClip = new AnimationClip();
             EditorUtility.CopySerialized(sourceClip, newClip);
-            AssetDatabase.CreateAsset(newClip, newPath);
+            AssetDatabase.CreateAsset(newClip, path);
             return newClip;
         }
         return null;
